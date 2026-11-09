@@ -1,4 +1,5 @@
 using ArchViz.Application.Auth;
+using ArchViz.Application.Communication;
 using ArchViz.Application.Estimation;
 using ArchViz.Application.Orders;
 using ArchViz.Application.Scenes;
@@ -153,6 +154,14 @@ builder.Services.AddScoped<SaveScenePredictionHandler>();
 builder.Services.AddScoped<ApproveScenePlanHandler>();
 
 builder.Services.AddScoped<StartSceneWorkHandler>();
+
+builder.Services.AddScoped<ISceneTimeRepository, SceneTimeRepository>();
+
+builder.Services.AddScoped<IDeliveryRepository, DeliveryRepository>();
+
+builder.Services.AddScoped<IOrderWorkflowRepository, OrderWorkflowRepository>();
+
+builder.Services.AddScoped<ICommunicationRepository, CommunicationRepository>();
 
 var app = builder.Build();
 

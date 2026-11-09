@@ -1,4 +1,4 @@
-﻿namespace ArchViz.Domain.Scenes;
+namespace ArchViz.Domain.Scenes;
 
 public sealed class Scene
 {
@@ -57,6 +57,33 @@ public sealed class Scene
         }
 
         Status = SceneStatus.Ready;
+    }
+
+    public string? ClosedById { get; private set; }
+    public DateTimeOffset? ClosedAt { get; private set; }
+
+    public void SubmitRender() => Move(SceneStatus.InProgress, SceneStatus.InternalReview);
+    public void PublishRender() => Move(SceneStatus.InternalReview, SceneStatus.ClientReview);
+    public void ReturnFromInternalReview() => Move(SceneStatus.InternalReview, SceneStatus.InProgress);
+    public void AcceptRender() => Move(SceneStatus.ClientReview, SceneStatus.ClientAccepted);
+    public void ReturnFromClientReview() => Move(SceneStatus.ClientReview, SceneStatus.InProgress);
+    public void ReopenAssessment() => Move(SceneStatus.InProgress, SceneStatus.AwaitingAssessment);
+
+    public void Close(string managerId)
+    {
+        Move(SceneStatus.ClientAccepted, SceneStatus.Closed);
+        ClosedById = managerId;
+        ClosedAt = DateTimeOffset.UtcNow;
+    }
+
+    private void Move(SceneStatus expected, SceneStatus next)
+    {
+        if (Status != expected)
+        {
+            throw new InvalidOperationException("The scene is not in the expected state.");
+        }
+
+        Status = next;
     }
 
     public void StartWork()

@@ -1,4 +1,4 @@
-﻿namespace ArchViz.Domain.Orders;
+namespace ArchViz.Domain.Orders;
 
 public sealed class Order
 {
@@ -48,6 +48,40 @@ public sealed class Order
 
         ManagerId = managerId;
         Status = OrderStatus.InPlanning;
+    }
+
+    public DateTimeOffset? CompletedAt { get; private set; }
+
+    public void Complete()
+    {
+        if (Status is not (OrderStatus.InPlanning or OrderStatus.InProgress))
+        {
+            throw new InvalidOperationException("Only an active order can be completed.");
+        }
+
+        Status = OrderStatus.Completed;
+        CompletedAt = DateTimeOffset.UtcNow;
+    }
+
+    public void TransferTo(string managerId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(managerId);
+        if (Status is not (OrderStatus.InPlanning or OrderStatus.InProgress))
+        {
+            throw new InvalidOperationException("Only an active order can be transferred.");
+        }
+
+        ManagerId = managerId;
+    }
+
+    public void Cancel()
+    {
+        if (Status is OrderStatus.Cancelled or OrderStatus.Completed)
+        {
+            throw new InvalidOperationException("The order cannot be cancelled.");
+        }
+
+        Status = OrderStatus.Cancelled;
     }
 
     private Order()

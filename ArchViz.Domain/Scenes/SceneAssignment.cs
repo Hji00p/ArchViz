@@ -1,4 +1,4 @@
-﻿namespace ArchViz.Domain.Scenes;
+namespace ArchViz.Domain.Scenes;
 
 public sealed class SceneAssignment
 {
@@ -7,6 +7,21 @@ public sealed class SceneAssignment
     public string VisualizerId { get; private set; }
     public DateTimeOffset AssignedAt { get; private set; }
     public DateTimeOffset? EndedAt { get; private set; }
+
+    public string? EndedById { get; private set; }
+    public string? EndReason { get; private set; }
+
+    public void End(string managerId, string reason)
+    {
+        if (EndedAt is not null)
+        {
+            throw new InvalidOperationException("The assignment has already ended.");
+        }
+
+        EndedById = managerId;
+        EndReason = reason.Trim();
+        EndedAt = DateTimeOffset.UtcNow;
+    }
 
     private SceneAssignment()
     {

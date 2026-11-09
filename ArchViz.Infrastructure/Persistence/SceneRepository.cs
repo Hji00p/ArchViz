@@ -1,4 +1,4 @@
-﻿using ArchViz.Application.Scenes;
+using ArchViz.Application.Scenes;
 using ArchViz.Domain.Scenes;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -16,12 +16,24 @@ public sealed class SceneRepository : ISceneRepository
         _db = db;
     }
 
-    public async Task<int> AddAsync(
+    public async Task<int?> AddAsync(
         Scene scene,
+        string managerId,
         CancellationToken cancellationToken)
     {
+        await using var transaction =
+            await _db.Database.BeginTransactionAsync(cancellationToken);
+        var order = await LockOrderAsync(scene.OrderId, cancellationToken);
+
+        if (order is null || order.ManagerId != managerId ||
+            order.Status != OrderStatus.InPlanning)
+        {
+            return null;
+        }
+
         _db.Scenes.Add(scene);
         await _db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return scene.Id;
     }
@@ -38,15 +50,24 @@ public sealed class SceneRepository : ISceneRepository
     }
 
     public async Task<int?> AddAssignmentAsync(
-    SceneAssignment assignment,
-    CancellationToken cancellationToken)
+        SceneAssignment assignment,
+        string managerId,
+        CancellationToken cancellationToken)
     {
+        await using var transaction =
+            await _db.Database.BeginTransactionAsync(cancellationToken);
+        if (!await CanPlanSceneAsync(assignment.SceneId, managerId, cancellationToken))
+        {
+            return null;
+        }
+
         _db.SceneAssignments.Add(assignment);
 
         try
         {
             await _db.SaveChangesAsync(cancellationToken);
 
+            await transaction.CommitAsync(cancellationToken);
             return assignment.Id;
         }
         catch (DbUpdateException exception)
@@ -101,12 +122,20 @@ public sealed class SceneRepository : ISceneRepository
     SceneRequirementsRevision revision,
     CancellationToken cancellationToken)
     {
+        await using var transaction =
+            await _db.Database.BeginTransactionAsync(cancellationToken);
+        if (!await CanPlanSceneAsync(revision.SceneId, revision.CreatedById, cancellationToken))
+        {
+            return null;
+        }
+
         _db.SceneRequirementsRevisions.Add(revision);
 
         try
         {
             await _db.SaveChangesAsync(cancellationToken);
 
+            await transaction.CommitAsync(cancellationToken);
             return revision.Id;
         }
         catch (DbUpdateException exception)
@@ -156,6 +185,12 @@ public sealed class SceneRepository : ISceneRepository
     {
         await using var transaction =
             await _db.Database.BeginTransactionAsync(cancellationToken);
+
+        var order = await LockOrderAsync(scene.OrderId, cancellationToken);
+        if (!IsActive(order))
+        {
+            return null;
+        }
 
         var updatedRows = await _db.Scenes
             .Where(savedScene =>
@@ -209,14 +244,17 @@ public sealed class SceneRepository : ISceneRepository
         await using var transaction =
             await _db.Database.BeginTransactionAsync(cancellationToken);
 
+        var order = await LockOrderAsync(scene.OrderId, cancellationToken);
+        if (order is null || order.ManagerId != approval.ApprovedById ||
+            order.Status != OrderStatus.InPlanning)
+        {
+            return null;
+        }
+
         var updatedRows = await _db.Scenes
             .Where(savedScene =>
                 savedScene.Id == scene.Id &&
-                savedScene.Status == SceneStatus.AwaitingPlanApproval &&
-                _db.Orders.Any(order =>
-                    order.Id == savedScene.OrderId &&
-                    order.ManagerId == approval.ApprovedById &&
-                    order.Status == OrderStatus.InPlanning))
+                savedScene.Status == SceneStatus.AwaitingPlanApproval)
             .ExecuteUpdateAsync(
                 setters => setters.SetProperty(
                     savedScene => savedScene.Status,
@@ -241,6 +279,14 @@ public sealed class SceneRepository : ISceneRepository
     string visualizerId,
     CancellationToken cancellationToken)
     {
+        await using var transaction =
+            await _db.Database.BeginTransactionAsync(cancellationToken);
+        var order = await LockOrderAsync(scene.OrderId, cancellationToken);
+        if (!IsActive(order))
+        {
+            return false;
+        }
+
         var updatedRows = await _db.Scenes
             .Where(savedScene =>
                 savedScene.Id == scene.Id &&
@@ -255,8 +301,42 @@ public sealed class SceneRepository : ISceneRepository
                     scene.Status),
                 cancellationToken);
 
+        await transaction.CommitAsync(cancellationToken);
         return updatedRows == 1;
     }
+
+    private async Task<bool> CanPlanSceneAsync(
+        int sceneId, string managerId, CancellationToken cancellationToken)
+    {
+        var orderId = await _db.Scenes.Where(scene => scene.Id == sceneId)
+            .Select(scene => (int?)scene.OrderId)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (orderId is null)
+        {
+            return false;
+        }
+
+        var order = await LockOrderAsync(orderId.Value, cancellationToken);
+        return order is not null && order.ManagerId == managerId &&
+            order.Status == OrderStatus.InPlanning &&
+            await _db.Scenes.AnyAsync(
+                scene => scene.Id == sceneId && scene.Status == SceneStatus.AwaitingAssessment,
+                cancellationToken);
+    }
+
+    private async Task<Order?> LockOrderAsync(int orderId, CancellationToken cancellationToken)
+    {
+        var rows = await _db.Orders
+            .FromSqlInterpolated($"""SELECT * FROM "Orders" WHERE "Id" = {orderId} FOR UPDATE""")
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
+        return rows.SingleOrDefault();
+    }
+
+    private static bool IsActive(Order? order) =>
+        order?.Status is OrderStatus.InPlanning or OrderStatus.InProgress;
 
     public Task<Scene?> GetAssignedSceneAsync(
     int sceneId,

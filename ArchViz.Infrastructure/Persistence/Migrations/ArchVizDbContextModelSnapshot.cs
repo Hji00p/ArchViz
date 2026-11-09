@@ -22,6 +22,86 @@ namespace ArchViz.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("ArchViz.Domain.Communication.ChatMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("SceneId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SenderId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("SceneId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("ChatMessages", t =>
+                        {
+                            t.HasCheckConstraint("CK_ChatMessages_SingleContext", "(\"OrderId\" IS NULL) <> (\"SceneId\" IS NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("ArchViz.Domain.Communication.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("ReadAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("SceneId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("SceneId");
+
+                    b.HasIndex("UserId", "Id");
+
+                    b.ToTable("Notifications");
+                });
+
             modelBuilder.Entity("ArchViz.Domain.Estimation.MLModelVersion", b =>
                 {
                     b.Property<int>("Id")
@@ -118,6 +198,42 @@ namespace ArchViz.Infrastructure.Persistence.Migrations
                     b.ToTable("ScenePlanApprovals");
                 });
 
+            modelBuilder.Entity("ArchViz.Domain.Orders.Attachment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<byte[]>("Content")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("UploadedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UploadedById")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("UploadedById");
+
+                    b.ToTable("Attachments");
+                });
+
             modelBuilder.Entity("ArchViz.Domain.Orders.Order", b =>
                 {
                     b.Property<int>("Id")
@@ -128,6 +244,9 @@ namespace ArchViz.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("ClientId")
                         .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -148,6 +267,161 @@ namespace ArchViz.Infrastructure.Persistence.Migrations
                     b.ToTable("Orders");
                 });
 
+            modelBuilder.Entity("ArchViz.Domain.Orders.OrderActionRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("DecidedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DecidedById")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RequestedById")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TargetManagerId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId", "Kind")
+                        .IsUnique()
+                        .HasFilter("\"Status\" = 0");
+
+                    b.ToTable("OrderActionRequests");
+                });
+
+            modelBuilder.Entity("ArchViz.Domain.Scenes.RenderVersion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("AcceptedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AcceptedById")
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("Content")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PublishedById")
+                        .HasColumnType("text");
+
+                    b.Property<int>("SceneId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("UploadedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UploadedById")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UploadedById");
+
+                    b.HasIndex("SceneId", "VersionNumber")
+                        .IsUnique();
+
+                    b.ToTable("RenderVersions");
+                });
+
+            modelBuilder.Entity("ArchViz.Domain.Scenes.RevisionRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("Classification")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ClassificationReason")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset?>("ClassifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ClassifiedById")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsInternal")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("RenderVersionId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RequestedById")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("RequirementsRevisionId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RenderVersionId");
+
+                    b.HasIndex("RequestedById");
+
+                    b.HasIndex("RequirementsRevisionId");
+
+                    b.ToTable("RevisionRequests");
+                });
+
             modelBuilder.Entity("ArchViz.Domain.Scenes.Scene", b =>
                 {
                     b.Property<int>("Id")
@@ -155,6 +429,12 @@ namespace ArchViz.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ClosedById")
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -230,8 +510,14 @@ namespace ArchViz.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("AssignedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("EndReason")
+                        .HasColumnType("text");
+
                     b.Property<DateTimeOffset?>("EndedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EndedById")
+                        .HasColumnType("text");
 
                     b.Property<int>("SceneId")
                         .HasColumnType("integer");
@@ -285,6 +571,71 @@ namespace ArchViz.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("SceneRequirementsRevisions");
+                });
+
+            modelBuilder.Entity("ArchViz.Domain.Scenes.TimeEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("Hours")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("SceneId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateOnly>("WorkDate")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SceneId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("TimeEntries");
+                });
+
+            modelBuilder.Entity("ArchViz.Domain.Scenes.TimeEntryChange", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PreviousDescription")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("PreviousHours")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateOnly>("PreviousWorkDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("TimeEntryId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TimeEntryId");
+
+                    b.ToTable("TimeEntryChanges");
                 });
 
             modelBuilder.Entity("ArchViz.Infrastructure.Identity.AppUser", b =>
@@ -483,6 +834,45 @@ namespace ArchViz.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("ArchViz.Domain.Communication.ChatMessage", b =>
+                {
+                    b.HasOne("ArchViz.Domain.Orders.Order", null)
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ArchViz.Domain.Scenes.Scene", null)
+                        .WithMany()
+                        .HasForeignKey("SceneId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ArchViz.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ArchViz.Domain.Communication.Notification", b =>
+                {
+                    b.HasOne("ArchViz.Domain.Orders.Order", null)
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ArchViz.Domain.Scenes.Scene", null)
+                        .WithMany()
+                        .HasForeignKey("SceneId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ArchViz.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("ArchViz.Domain.Estimation.MLPrediction", b =>
                 {
                     b.HasOne("ArchViz.Domain.Scenes.SceneAssessment", null)
@@ -511,6 +901,65 @@ namespace ArchViz.Infrastructure.Persistence.Migrations
                         .HasForeignKey("PredictionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("ArchViz.Domain.Orders.Attachment", b =>
+                {
+                    b.HasOne("ArchViz.Domain.Orders.Order", null)
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ArchViz.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UploadedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ArchViz.Domain.Orders.OrderActionRequest", b =>
+                {
+                    b.HasOne("ArchViz.Domain.Orders.Order", null)
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ArchViz.Domain.Scenes.RenderVersion", b =>
+                {
+                    b.HasOne("ArchViz.Domain.Scenes.Scene", null)
+                        .WithMany()
+                        .HasForeignKey("SceneId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ArchViz.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UploadedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ArchViz.Domain.Scenes.RevisionRequest", b =>
+                {
+                    b.HasOne("ArchViz.Domain.Scenes.RenderVersion", null)
+                        .WithMany()
+                        .HasForeignKey("RenderVersionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ArchViz.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("RequestedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ArchViz.Domain.Scenes.SceneRequirementsRevision", null)
+                        .WithMany()
+                        .HasForeignKey("RequirementsRevisionId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("ArchViz.Domain.Scenes.Scene", b =>
@@ -563,6 +1012,30 @@ namespace ArchViz.Infrastructure.Persistence.Migrations
                     b.HasOne("ArchViz.Domain.Scenes.Scene", null)
                         .WithMany()
                         .HasForeignKey("SceneId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ArchViz.Domain.Scenes.TimeEntry", b =>
+                {
+                    b.HasOne("ArchViz.Domain.Scenes.Scene", null)
+                        .WithMany()
+                        .HasForeignKey("SceneId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ArchViz.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ArchViz.Domain.Scenes.TimeEntryChange", b =>
+                {
+                    b.HasOne("ArchViz.Domain.Scenes.TimeEntry", null)
+                        .WithMany()
+                        .HasForeignKey("TimeEntryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

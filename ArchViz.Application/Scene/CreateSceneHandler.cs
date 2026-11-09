@@ -1,4 +1,4 @@
-﻿using ArchViz.Application.Orders;
+using ArchViz.Application.Orders;
 using ArchViz.Domain.Orders;
 using ArchViz.Domain.Scenes;
 
@@ -43,7 +43,13 @@ public sealed class CreateSceneHandler
 
         var sceneId = await _scenes.AddAsync(
             scene,
+            managerId,
             cancellationToken);
+
+        if (sceneId is null)
+        {
+            return new(CreateSceneStatus.OrderNotInPlanning);
+        }
 
         return new CreateSceneResult(
             CreateSceneStatus.Success,

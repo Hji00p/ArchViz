@@ -1,12 +1,13 @@
-﻿using ArchViz.Domain.Estimation;
+using ArchViz.Domain.Estimation;
 using ArchViz.Domain.Scenes;
 
 namespace ArchViz.Application.Scenes;
 
 public interface ISceneRepository
 {
-    Task<int> AddAsync(
+    Task<int?> AddAsync(
         Scene scene,
+        string managerId,
         CancellationToken cancellationToken);
 
     Task<IReadOnlyList<Scene>> GetByOrderIdAsync(
@@ -15,6 +16,7 @@ public interface ISceneRepository
 
     Task<int?> AddAssignmentAsync(
     SceneAssignment assignment,
+    string managerId,
     CancellationToken cancellationToken);
 
     Task<Scene?> GetByIdAsync(

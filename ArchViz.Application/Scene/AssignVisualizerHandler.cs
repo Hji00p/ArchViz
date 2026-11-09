@@ -1,4 +1,4 @@
-﻿using ArchViz.Application.Orders;
+using ArchViz.Application.Orders;
 using ArchViz.Application.Users;
 using ArchViz.Domain.Orders;
 using ArchViz.Domain.Scenes;
@@ -64,11 +64,13 @@ public sealed class AssignVisualizerHandler
         var assignment = new SceneAssignment(sceneId, visualizerId);
 
         var assignmentId = await _scenes.AddAssignmentAsync(
-            assignment, cancellationToken);
+            assignment, managerId, cancellationToken);
 
         if (assignmentId is null)
         {
-            return new(AssignVisualizerStatus.AlreadyAssigned);
+            return new(await _scenes.HasActiveAssignmentAsync(sceneId, cancellationToken)
+                ? AssignVisualizerStatus.AlreadyAssigned
+                : AssignVisualizerStatus.InvalidState);
         }
 
         return new(
