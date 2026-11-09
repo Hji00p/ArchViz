@@ -1,0 +1,6 @@
+@ArchViz.Api_HostAddress = http://localhost:5233
+
+GET {{ArchViz.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

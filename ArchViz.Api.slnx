@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="ArchViz.Api/ArchViz.Api.csproj" />
+  <Project Path="ArchViz.Application/ArchViz.Application.csproj" />
+  <Project Path="ArchViz.Domain/ArchViz.Domain.csproj" />
+  <Project Path="ArchViz.Infrastructure/ArchViz.Infrastructure.csproj" />
+  <Project Path="ArchViz.ModelTrainer/ArchViz.ModelTrainer.csproj" Id="510bd925-c99d-42b2-a605-1c677dd4ae87" />
+  <Project Path="ArchViz.Tests/ArchViz.Tests.csproj" Id="f932cd7c-a945-435d-8ccf-418250e26782" />
+</Solution>
