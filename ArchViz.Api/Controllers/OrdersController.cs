@@ -1,4 +1,4 @@
-﻿using ArchViz.Api.Contracts.Orders;
+using ArchViz.Api.Contracts.Orders;
 using ArchViz.Application.Orders;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

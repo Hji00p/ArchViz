@@ -1,5 +1,3 @@
-﻿
-using ArchViz.Domain.Orders;
 
 namespace ArchViz.Application.Orders;
 
@@ -13,11 +11,11 @@ public sealed class GetOrderByIdHandler
     }
 
     public async Task<OrderResponse?> HandleAsync(
-    int id,
-    string clientId,
-    CancellationToken cancellationToken)
+        int orderId,
+        string clientId,
+        CancellationToken cancellationToken)
     {
-        var order = await _orders.GetByIdAsync(id, cancellationToken);
+        var order = await _orders.GetByIdAsync(orderId, cancellationToken);
 
         if (order is null || order.ClientId != clientId)
         {

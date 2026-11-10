@@ -1,4 +1,5 @@
-﻿namespace ArchViz.Application.Orders;
+
+namespace ArchViz.Application.Orders;
 
 public sealed class GetOrderQueueHandler
 {

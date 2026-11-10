@@ -1,4 +1,4 @@
-﻿using ArchViz.Domain.Orders;
+using ArchViz.Domain.Orders;
 
 namespace ArchViz.Application.Orders;
 
@@ -11,14 +11,14 @@ public sealed class SubmitOrderHandler
         _orders = orders;
     }
 
-    public Task<int> HandleAsync(
-    string title,
-    string description,
-    string clientId,
-    CancellationToken cancellationToken)
+    public async Task<int> HandleAsync(
+        string title,
+        string description,
+        string clientId,
+        CancellationToken cancellationToken)
     {
         var order = new Order(title, description, clientId);
 
-        return _orders.AddAsync(order, cancellationToken);
+        return await _orders.AddAsync(order, cancellationToken);
     }
 }

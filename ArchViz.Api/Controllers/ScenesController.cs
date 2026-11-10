@@ -1,9 +1,9 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using ArchViz.Api.Contracts.Scenes;
+using ArchViz.Application.Estimation;
 using ArchViz.Application.Scenes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ArchViz.Application.Estimation;
 
 
 namespace ArchViz.Api.Controllers;

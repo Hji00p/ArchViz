@@ -1,20 +1,21 @@
-﻿namespace ArchViz.Application.Orders;
 
-public sealed class GetManagedOrdersHandler
+namespace ArchViz.Application.Orders;
+
+public sealed class GetOrdersHandler
 {
     private readonly IOrderRepository _orders;
 
-    public GetManagedOrdersHandler(IOrderRepository orders)
+    public GetOrdersHandler(IOrderRepository orders)
     {
         _orders = orders;
     }
 
     public async Task<IReadOnlyList<OrderResponse>> HandleAsync(
-        string managerId,
+        string clientId,
         CancellationToken cancellationToken)
     {
-        var orders = await _orders.GetByManagerIdAsync(
-            managerId,
+        var orders = await _orders.GetByClientIdAsync(
+            clientId,
             cancellationToken);
 
         return orders
